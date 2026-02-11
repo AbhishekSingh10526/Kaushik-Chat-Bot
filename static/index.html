@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kaushik AI</title>
+
+<style>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    background: #1c1c1c;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* Card Container */
+.card {
+    width: 95%;
+    max-width: 420px;
+    background: #242424;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 0 25px rgba(0,0,0,0.6);
+    text-align: center;
+}
+
+/* Inputs */
+input {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border-radius: 8px;
+    border: none;
+    background: #333;
+    color: white;
+}
+
+/* Buttons */
+button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    border-radius: 8px;
+    border: none;
+    background: #4CAF50;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+button:hover {
+    opacity: 0.9;
+}
+
+/* Chat Box */
+.chat-container {
+    display: none;
+    flex-direction: column;
+    height: 80vh;
+}
+
+.messages {
+    flex: 1;
+    overflow-y: auto;
+    text-align: left;
+    margin-bottom: 10px;
+}
+
+.message {
+    padding: 10px;
+    margin: 8px 0;
+    border-radius: 8px;
+    max-width: 80%;
+}
+
+.user {
+    background: #3a3a3a;
+    align-self: flex-end;
+}
+
+.ai {
+    background: #4CAF50;
+    color: white;
+    align-self: flex-start;
+}
+
+.row {
+    display: flex;
+    gap: 10px;
+}
+
+.row input {
+    flex: 1;
+}
+
+.logout {
+    background: crimson;
+    margin-top: 5px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card" id="authCard">
+
+    <h2 id="authTitle">Login</h2>
+
+    <input type="text" id="username" placeholder="Username" />
+    <input type="password" id="password" placeholder="Password" />
+
+    <button onclick="login()">Login</button>
+
+    <p style="margin-top:10px;">New user?
+        <span style="color:#4CAF50;cursor:pointer;" onclick="toggleAuth()">Register</span>
+    </p>
+
+</div>
+
+<div class="card chat-container" id="chatCard">
+
+    <h2>Kaushik AI</h2>
+
+    <div class="messages" id="messages"></div>
+
+    <div class="row">
+        <input type="text" id="msg" placeholder="Type a message..." />
+        <button onclick="send()">Send</button>
+    </div>
+
+    <button class="logout" onclick="logout()">Logout</button>
+
+</div>
+
+<script>
+
+let isRegister = false;
+let currentUser = null;
+
+/* Switch Login/Register */
+function toggleAuth() {
+    isRegister = !isRegister;
+    document.getElementById("authTitle").innerText = 
+        isRegister ? "Register" : "Login";
+}
+
+/* Register */
+function register() {
+    const user = username.value;
+    const pass = password.value;
+
+    if (!user || !pass) return alert("Fill all fields");
+
+    localStorage.setItem(user, pass);
+    alert("Registered! Now login.");
+    toggleAuth();
+}
+
+/* Login */
+function login() {
+    const user = username.value;
+    const pass = password.value;
+
+    if (isRegister) return register();
+
+    if (localStorage.getItem(user) === pass) {
+        currentUser = user;
+        authCard.style.display = "none";
+        chatCard.style.display = "flex";
+    } else {
+        alert("Invalid credentials");
+    }
+}
+
+/* Logout */
+function logout() {
+    currentUser = null;
+    chatCard.style.display = "none";
+    authCard.style.display = "block";
+}
+
+/* Add Message */
+function add(text, type) {
+    const div = document.createElement("div");
+    div.className = "message " + type;
+    div.innerText = text;
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+}
+
+/* Send Message */
+async function send() {
+    const message = msg.value;
+    if (!message) return;
+
+    add(message, "user");
+    msg.value = "";
+
+    const res = await fetch("/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            user_id: currentUser,
+            message: message
+        })
+    });
+
+    const data = await res.json();
+    add(data.reply, "ai");
+}
+
+</script>
+
+</body>
+</html>
